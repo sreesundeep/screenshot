@@ -57,5 +57,3 @@ We need to implement the below functions as part of FHL.
                 }
             });
 
-
-Then a window manager widget will come. Please do implement respective functionalities.
