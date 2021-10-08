@@ -14,7 +14,8 @@ Currently, onClick of close (x) icon, widget will be closed.
 
 We need to implement the below functions as part of FHL.
 
-mOverlayView.findViewById(R.id.left).setOnClickListener(new View.OnClickListener() {
+
+            mOverlayView.findViewById(R.id.left).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Left Screen Screenshot
