@@ -12,6 +12,8 @@ import android.view.WindowManager;
 
 import static android.content.Context.WINDOW_SERVICE;
 
+import com.microsoft.android.screenshot.mediaprojectiondemo.ScreenCaptureActivity;
+
 public class ScreenshotWidgetReceiver extends BroadcastReceiver {
 
     private static final String TAG = "ScreenshotWidgetReceiver";
@@ -64,6 +66,9 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver {
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Dual Screen Screenshot
+                    Intent i = new Intent(context, ScreenCaptureActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(i);
                 }
             });
 
