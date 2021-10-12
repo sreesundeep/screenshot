@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
+import android.os.StrictMode;
 
 import com.microsoft.android.screenshot.mediaprojection.ScreenCaptureService;
 
@@ -29,6 +30,8 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
         myReceiver = new ScreenshotWidgetReceiver();
         this.registerReceiver(myReceiver, new IntentFilter("android.intent.action.show_screenshot_widget"));
         startProjection();

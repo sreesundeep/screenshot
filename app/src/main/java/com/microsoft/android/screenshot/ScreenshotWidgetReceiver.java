@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.util.Log;
 import android.view.Gravity;
@@ -64,6 +65,7 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Left Screen Screenshot
+                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 1344, 1832));
                 }
             });
 
@@ -71,6 +73,7 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Right Screen Screenshot
+                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(1410, 0, 2816, 1832));
                 }
             });
 
@@ -78,7 +81,7 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Dual Screen Screenshot
-                    ScreenCaptureService.getLatestImage(screenshotReceiver);
+                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 2816, 1832));
                 }
             });
 

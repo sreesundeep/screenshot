@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.Image;
@@ -59,6 +60,7 @@ public class ScreenCaptureService extends Service {
 
     private static volatile File mFile = null;
     public static boolean mIsScreenshotNeeded = false;
+    public static Rect mScreenshotRect = null; //new Rect(0, 0, 2754, 1892);
 
     public static IScreenshot mScreenshotReceiver;
 
@@ -95,7 +97,7 @@ public class ScreenCaptureService extends Service {
             FileOutputStream fos = null;
             Bitmap bitmap = null;
             try (Image image = mImageReader.acquireLatestImage()) {
-                if (image != null && mIsScreenshotNeeded) {
+                if (image != null && mIsScreenshotNeeded && mScreenshotRect!=null) {
                     mIsScreenshotNeeded = false;
                     Image.Plane[] planes = image.getPlanes();
                     ByteBuffer buffer = planes[0].getBuffer();
@@ -106,8 +108,9 @@ public class ScreenCaptureService extends Service {
                     // create bitmap
                     bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
                     bitmap.copyPixelsFromBuffer(buffer);
-
-                    Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight());
+                    Log.e(TAG, "Captured bitmap width : " + bitmap.getWidth() + "height :"+bitmap.getHeight());
+                    Log.e(TAG, "Captured rect width : " + mScreenshotRect.width() + "height :"+mScreenshotRect.height());
+                    Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, mScreenshotRect.left, mScreenshotRect.top, mScreenshotRect.width(), mScreenshotRect.height());
 
                     // write bitmap to a file
                     String filePath = mStoreDir + "/Screenshot_" + System.currentTimeMillis() + ".png";
@@ -117,6 +120,7 @@ public class ScreenCaptureService extends Service {
                     croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
                     mScreenshotReceiver.sendScreenshot(imageFile);
                     mScreenshotReceiver = null;
+                    mScreenshotRect = null;
                 }
 
             } catch (Exception e) {
@@ -138,9 +142,10 @@ public class ScreenCaptureService extends Service {
         }
     }
 
-    public static void getLatestImage(IScreenshot screenshotReceiver) {
+    public static void getLatestImage(IScreenshot screenshotReceiver, Rect rect) {
         mIsScreenshotNeeded = true;
         mScreenshotReceiver = screenshotReceiver;
+        mScreenshotRect = rect;
     }
 
     private class OrientationChangeCallback extends OrientationEventListener {
@@ -196,7 +201,7 @@ public class ScreenCaptureService extends Service {
         // create store dir
         File externalFilesDir = getExternalFilesDir(null);
         if (externalFilesDir != null) {
-            mStoreDir = "/storage/emulated/0/Pictures/Screenshots";
+            mStoreDir = "storage/emulated/0/Pictures/Screenshots";
             File storeDirectory = new File(mStoreDir);
             if (!storeDirectory.exists()) {
                 boolean success = storeDirectory.mkdirs();
