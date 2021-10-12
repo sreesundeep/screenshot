@@ -111,6 +111,7 @@ public class ScreenCaptureService extends Service {
                     Log.e(TAG, "Captured bitmap width : " + bitmap.getWidth() + "height :"+bitmap.getHeight());
                     Log.e(TAG, "Captured rect width : " + mScreenshotRect.width() + "height :"+mScreenshotRect.height());
                     Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, mScreenshotRect.left, mScreenshotRect.top, mScreenshotRect.width(), mScreenshotRect.height());
+                    mScreenshotReceiver.sendBitmap(croppedBitmap);
 
                     // write bitmap to a file
                     String filePath = mStoreDir + "/Screenshot_" + System.currentTimeMillis() + ".png";
@@ -297,5 +298,7 @@ public class ScreenCaptureService extends Service {
 
     public interface IScreenshot {
         void sendScreenshot(File file);
+
+        void sendBitmap(Bitmap bitmap);
     }
 }
