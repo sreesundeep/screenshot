@@ -1,4 +1,4 @@
-package com.microsoft.android.screenshot.mediaprojectiondemo;
+package com.microsoft.android.screenshot.mediaprojection;
 
 
 import android.annotation.TargetApi;

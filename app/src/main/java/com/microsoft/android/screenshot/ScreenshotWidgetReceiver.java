@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -12,16 +13,26 @@ import android.view.WindowManager;
 
 import static android.content.Context.WINDOW_SERVICE;
 
-import com.microsoft.android.screenshot.mediaprojectiondemo.ScreenCaptureActivity;
+import com.microsoft.android.screenshot.mediaprojection.ScreenCaptureService;
 
-public class ScreenshotWidgetReceiver extends BroadcastReceiver {
+import java.io.File;
+
+public class ScreenshotWidgetReceiver extends BroadcastReceiver implements ScreenCaptureService.IScreenshot {
 
     private static final String TAG = "ScreenshotWidgetReceiver";
 
+    private Context mContext;
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "onReceive intent action "+intent.getAction());
+        // showScreenshotWidget(context);
+    }
+
+    public void showScreenshotWidget(Context context, int requestCode, int resultCode, Intent data) {
+        mContext = context;
+        context.startService(ScreenCaptureService.getStartIntent(context, resultCode, data));
+
         WindowManager windowManager = (WindowManager) context.getSystemService(WINDOW_SERVICE);
         View mOverlayView = LayoutInflater.from(context).inflate(R.layout.screenshot_widget_layout, null);
 
@@ -38,6 +49,7 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver {
 
         params.gravity = Gravity.CENTER | Gravity.BOTTOM;
         windowManager.addView(mOverlayView, params);
+        final ScreenCaptureService.IScreenshot screenshotReceiver = this;
 
         try {
             mOverlayView.findViewById(R.id.close).setOnClickListener(new View.OnClickListener() {
@@ -66,9 +78,7 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver {
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Dual Screen Screenshot
-                    Intent i = new Intent(context, ScreenCaptureActivity.class);
-                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(i);
+                    ScreenCaptureService.getLatestImage(screenshotReceiver);
                 }
             });
 
@@ -95,5 +105,19 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void openScreenshot(File imageFile) {
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_VIEW);
+        Uri uri = Uri.fromFile(imageFile);
+        intent.setDataAndType(uri, "image/*");
+        mContext.startActivity(intent);
+    }
+
+    @Override
+    public void sendScreenshot(File file) {
+        Log.d(TAG, "sendScreenshot file path "+file.getPath());
+        openScreenshot(file);
     }
 }

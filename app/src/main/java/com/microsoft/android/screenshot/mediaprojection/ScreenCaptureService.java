@@ -1,4 +1,4 @@
-package com.microsoft.android.screenshot.mediaprojectiondemo;
+package com.microsoft.android.screenshot.mediaprojection;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.Objects;
 
 import androidx.core.util.Pair;
@@ -54,6 +56,11 @@ public class ScreenCaptureService extends Service {
     private int mHeight;
     private int mRotation;
     private OrientationChangeCallback mOrientationChangeCallback;
+
+    private static volatile File mFile = null;
+    public static boolean mIsScreenshotNeeded = false;
+
+    public static IScreenshot mScreenshotReceiver;
 
     public static Intent getStartIntent(Context context, int resultCode, Intent data) {
         Intent intent = new Intent(context, ScreenCaptureService.class);
@@ -85,11 +92,11 @@ public class ScreenCaptureService extends Service {
     private class ImageAvailableListener implements ImageReader.OnImageAvailableListener {
         @Override
         public void onImageAvailable(ImageReader reader) {
-
             FileOutputStream fos = null;
             Bitmap bitmap = null;
             try (Image image = mImageReader.acquireLatestImage()) {
-                if (image != null) {
+                if (image != null && mIsScreenshotNeeded) {
+                    mIsScreenshotNeeded = false;
                     Image.Plane[] planes = image.getPlanes();
                     ByteBuffer buffer = planes[0].getBuffer();
                     int pixelStride = planes[0].getPixelStride();
@@ -103,11 +110,13 @@ public class ScreenCaptureService extends Service {
                     Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
                     // write bitmap to a file
-                    fos = new FileOutputStream(mStoreDir + "/myscreen_" + IMAGES_PRODUCED + ".png");
+                    String filePath = mStoreDir + "/Screenshot_" + System.currentTimeMillis() + ".png";
+                    Log.e(TAG, "Captured image filePath: " + filePath);
+                    File imageFile = new File(filePath);
+                    fos = new FileOutputStream(imageFile);
                     croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-
-                    IMAGES_PRODUCED++;
-                    Log.e(TAG, "captured image: " + IMAGES_PRODUCED);
+                    mScreenshotReceiver.sendScreenshot(imageFile);
+                    mScreenshotReceiver = null;
                 }
 
             } catch (Exception e) {
@@ -127,6 +136,11 @@ public class ScreenCaptureService extends Service {
 
             }
         }
+    }
+
+    public static void getLatestImage(IScreenshot screenshotReceiver) {
+        mIsScreenshotNeeded = true;
+        mScreenshotReceiver = screenshotReceiver;
     }
 
     private class OrientationChangeCallback extends OrientationEventListener {
@@ -182,7 +196,7 @@ public class ScreenCaptureService extends Service {
         // create store dir
         File externalFilesDir = getExternalFilesDir(null);
         if (externalFilesDir != null) {
-            mStoreDir = externalFilesDir.getAbsolutePath() + "/screenshots/";
+            mStoreDir = "/storage/emulated/0/Pictures/Screenshots";
             File storeDirectory = new File(mStoreDir);
             if (!storeDirectory.exists()) {
                 boolean success = storeDirectory.mkdirs();
@@ -197,14 +211,11 @@ public class ScreenCaptureService extends Service {
         }
 
         // start capture handling thread
-        new Thread() {
-            @Override
-            public void run() {
-                Looper.prepare();
-                mHandler = new Handler();
-                Looper.loop();
-            }
-        }.start();
+        new Thread(() -> {
+            Looper.prepare();
+            mHandler = new Handler();
+            Looper.loop();
+        }).start();
     }
 
     @Override
@@ -277,5 +288,9 @@ public class ScreenCaptureService extends Service {
         mVirtualDisplay = mMediaProjection.createVirtualDisplay(SCREENCAP_NAME, mWidth, mHeight,
                 mDensity, getVirtualDisplayFlags(), mImageReader.getSurface(), null, mHandler);
         mImageReader.setOnImageAvailableListener(new ImageAvailableListener(), mHandler);
+    }
+
+    public interface IScreenshot {
+        void sendScreenshot(File file);
     }
 }
