@@ -12,9 +12,14 @@ public class GestureAccessibilityService extends AccessibilityService {
 
     @Override
     public boolean onGesture (AccessibilityGestureEvent gestureEvent) {
-        // super.onGesture(gestureEvent);
         Log.d(TAG, "onGesture 2:" + gestureEvent);
-        if (GESTURE_2_FINGER_SWIPE_DOWN == gestureEvent.getGestureId() || GESTURE_2_FINGER_SWIPE_UP == gestureEvent.getGestureId()) {
+        ScreenshotWidgetReceiver screenshotWidgetReceiver = new ScreenshotWidgetReceiver(this);
+        if (GESTURE_2_FINGER_SWIPE_DOWN == gestureEvent.getGestureId()) {
+            screenshotWidgetReceiver.takeLeftScreenScreenshot();
+        } else if (GESTURE_3_FINGER_SWIPE_DOWN == gestureEvent.getGestureId()) {
+            screenshotWidgetReceiver.takeRightScreenScreenshot();
+        } else if (GESTURE_4_FINGER_SWIPE_DOWN == gestureEvent.getGestureId()) {
+            screenshotWidgetReceiver.takeDualScreenScreenshot();
         } else {
             return super.onGesture(gestureEvent);
         }
@@ -33,7 +38,7 @@ public class GestureAccessibilityService extends AccessibilityService {
         // Set the type of feedback your service will provide.
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_ALL_MASK;
 
-        info.flags = AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        info.flags = AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE | AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES;
 
         info.notificationTimeout = 100;
 

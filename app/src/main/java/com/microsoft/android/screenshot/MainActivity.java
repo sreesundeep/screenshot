@@ -34,7 +34,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
-        myReceiver = new ScreenshotWidgetReceiver();
+        myReceiver = new ScreenshotWidgetReceiver(this);
         // this.registerReceiver(myReceiver, new IntentFilter("android.intent.action.show_screenshot_widget"));
         startProjection();
         if(!checkAccessibilityPermission()){

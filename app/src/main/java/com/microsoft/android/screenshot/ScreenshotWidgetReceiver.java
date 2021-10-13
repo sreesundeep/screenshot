@@ -23,6 +23,11 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
     private static final String TAG = "ScreenshotWidgetReceiver";
     final ScreenCaptureService.IScreenshot screenshotReceiver = this;
     private Context mContext;
+    private String mFilePath = "storage/emulated/0/Pictures/Screenshots";
+
+    public ScreenshotWidgetReceiver(Context context) {
+        mContext = context;
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -110,22 +115,32 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
     }
 
     public void takeLeftScreenScreenshot() {
+        Log.d(TAG, "takeLeftScreenScreenshot");
         ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 1344, 1832));
     }
 
     public void takeRightScreenScreenshot() {
+        Log.d(TAG, "takeRightScreenScreenshot");
         ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(1410, 0, 2816, 1832));
     }
 
     public void takeDualScreenScreenshot() {
+        Log.d(TAG, "takeDualScreenScreenshot");
         ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 2816, 1832));
     }
 
+    public void takeCustomScreenshot(Rect rect) {
+        Log.d(TAG, "takeCustomScreenshot");
+        ScreenCaptureService.getLatestImage(screenshotReceiver, rect);
+    }
+
     private void openScreenshot(File imageFile) {
+        Log.d(TAG, "openScreenshot file path "+imageFile.getPath());
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_VIEW);
         Uri uri = Uri.fromFile(imageFile);
         intent.setDataAndType(uri, "image/*");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
     }
 
