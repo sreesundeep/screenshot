@@ -13,4 +13,5 @@
     <string name="stop_recording">Stop Recording</string>
     <string name="recording">Recording</string>
     <string name="capture_activity">Screen Capture</string>
+    <string name="accessibility_service_description">screenshot accessibility service desc</string>
 </resources>

@@ -21,7 +21,7 @@ import java.io.File;
 public class ScreenshotWidgetReceiver extends BroadcastReceiver implements ScreenCaptureService.IScreenshot {
 
     private static final String TAG = "ScreenshotWidgetReceiver";
-
+    final ScreenCaptureService.IScreenshot screenshotReceiver = this;
     private Context mContext;
 
     @Override
@@ -50,7 +50,6 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
 
         params.gravity = Gravity.CENTER | Gravity.BOTTOM;
         windowManager.addView(mOverlayView, params);
-        final ScreenCaptureService.IScreenshot screenshotReceiver = this;
 
         try {
             mOverlayView.findViewById(R.id.close).setOnClickListener(new View.OnClickListener() {
@@ -64,24 +63,21 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
             mOverlayView.findViewById(R.id.left).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // TODO: Take Left Screen Screenshot
-                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 1344, 1832));
+                    takeLeftScreenScreenshot();
                 }
             });
 
             mOverlayView.findViewById(R.id.right).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // TODO: Take Right Screen Screenshot
-                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(1410, 0, 2816, 1832));
+                    takeRightScreenScreenshot();
                 }
             });
 
             mOverlayView.findViewById(R.id.dual).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // TODO: Take Dual Screen Screenshot
-                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 2816, 1832));
+                    takeDualScreenScreenshot();
                 }
             });
 
@@ -89,6 +85,9 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Complete Screen Scroll Screenshot
+                    windowManager.removeView(mOverlayView);
+                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 2816, 1832));
+                    windowManager.addView(mOverlayView, params);
                 }
             });
 
@@ -108,6 +107,18 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void takeLeftScreenScreenshot() {
+        ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 1344, 1832));
+    }
+
+    public void takeRightScreenScreenshot() {
+        ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(1410, 0, 2816, 1832));
+    }
+
+    public void takeDualScreenScreenshot() {
+        ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 2816, 1832));
     }
 
     private void openScreenshot(File imageFile) {
