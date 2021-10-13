@@ -14,7 +14,7 @@ public class Utils {
     private static final String TAG = "Utils";
     private static final String STORE_DIR = "/storage/emulated/0/Pictures/Screenshots";
     private static final int TOP_BAR_HEIGHT = 60;
-    private static final int BOTTOM_BAR_HEIGHT = 58;
+    private static final int BOTTOM_BAR_HEIGHT = 60;
 
     public static File saveBitmap(Bitmap combinedBitmap) {
         // write bitmap to a file
@@ -39,9 +39,8 @@ public class Utils {
         return imageFile;
     }
 
-    public static Bitmap combineImageIntoOneFlexWidth(ArrayList<Bitmap> bitmaps) {
+    public static Bitmap combineImageIntoOneFlexWidthWithOffset(ArrayList<Bitmap> bitmaps, int offset) {
         Log.d(TAG, "combine images: " + bitmaps);
-        int offset = 1500;
         int w = bitmaps.get(0).getWidth();
         int h = bitmaps.get(0).getHeight() + offset * (bitmaps.size() - 1);
 
@@ -52,6 +51,26 @@ public class Utils {
         for (int i = 1; i < bitmaps.size(); i++) {
             Log.e(TAG, "Combine: " + i + "/" + bitmaps.size());
             top += offset;
+            canvas.drawBitmap(bitmaps.get(i), 0f, top, null);
+        }
+        return temp;
+    }
+
+    public static Bitmap combineImageIntoOneFlexWidth(ArrayList<Bitmap> bitmaps) {
+        Log.d(TAG, "combine images: " + bitmaps);
+        int w = bitmaps.get(0).getWidth();
+        int h = 0;
+        for (int i = 0; i < bitmaps.size(); i++) {
+            h += bitmaps.get(i).getHeight();
+        }
+
+        Bitmap temp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(temp);
+        int top = 0;
+        canvas.drawBitmap(bitmaps.get(0), 0f, top, null);
+        for (int i = 1; i < bitmaps.size(); i++) {
+            Log.e(TAG, "Combine: " + i + "/" + bitmaps.size());
+            top += bitmaps.get(i-1).getHeight();
             canvas.drawBitmap(bitmaps.get(i), 0f, top, null);
         }
         return temp;

@@ -25,9 +25,14 @@ import static android.content.Context.WINDOW_SERVICE;
 
 public class ScreenshotWidgetReceiver extends BroadcastReceiver implements ScreenCaptureService.IScreenshot {
     private static final String TAG = "ScreenshotWidgetReceiver";
+    private static final int BOTTOM_BAR_HEIGHT = 60;
+    private static final int SCROLL_SIZE = 1500;
+
     private static final Rect LEFT_SCREEN = new Rect(0, 0, 1344, 1832);
     private static final Rect RIGHT_SCREEN = new Rect(1410, 0, 2816, 1832);
     private static final Rect DUAL_SCREEN = new Rect(0, 0, 2816, 1832);
+    // Crop rect for scroll screenshots. Change left and right according to whichever screen you want the screenshot from.
+    private static final Rect SCROLL_RECT = new Rect(0, (1832 - BOTTOM_BAR_HEIGHT - SCROLL_SIZE), 1344, SCROLL_SIZE);
 
     private Context mContext;
     private final ArrayList<Bitmap> mScrollScreenShots = new ArrayList<>(10);
@@ -114,8 +119,8 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
                         ScreenCaptureService.getLatestImage(bitmap -> {
                             windowManager.addView(mOverlayView, params);
                             Log.d(TAG, "bitmap received: " + mScrollScreenShots.size());
-                            mScrollScreenShots.add(Utils.getMainContent(bitmap));
-                        }, LEFT_SCREEN);
+                            mScrollScreenShots.add(bitmap);
+                        }, SCROLL_RECT);
                     }, 1000);
                 }
             });
