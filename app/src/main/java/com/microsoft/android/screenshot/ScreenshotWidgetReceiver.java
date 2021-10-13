@@ -23,6 +23,9 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
     private static final String TAG = "ScreenshotWidgetReceiver";
 
     private Context mContext;
+    WindowManager mWindowManager;
+    private SnipView mSnipView;
+    ScreenCaptureService.IScreenshot screenshotReceiver;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -32,9 +35,11 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
 
     public void showScreenshotWidget(Context context, int requestCode, int resultCode, Intent data) {
         mContext = context;
-        context.startService(ScreenCaptureService.getStartIntent(context, resultCode, data));
+        mWindowManager = (WindowManager) context.getSystemService(WINDOW_SERVICE);
+        screenshotReceiver = this;
+        mSnipView = new SnipView(context, screenshotReceiver);
+        context.startForegroundService(ScreenCaptureService.getStartIntent(context, resultCode, data));
 
-        WindowManager windowManager = (WindowManager) context.getSystemService(WINDOW_SERVICE);
         View mOverlayView = LayoutInflater.from(context).inflate(R.layout.screenshot_widget_layout, null);
 
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
@@ -49,14 +54,13 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
 
 
         params.gravity = Gravity.CENTER | Gravity.BOTTOM;
-        windowManager.addView(mOverlayView, params);
-        final ScreenCaptureService.IScreenshot screenshotReceiver = this;
+        mWindowManager.addView(mOverlayView, params);
 
         try {
             mOverlayView.findViewById(R.id.close).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    windowManager.removeView(mOverlayView);
+                    mWindowManager.removeView(mOverlayView);
                 }
             });
 
@@ -102,7 +106,19 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
             mOverlayView.findViewById(R.id.selective_shot).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // TODO: Take Selective Screen Scroll Screenshot
+                    mWindowManager.removeView(mOverlayView);
+                    WindowManager.LayoutParams snipViewParams = new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                            | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                            | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+                            | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        | WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                        PixelFormat.TRANSLUCENT);
+                    mWindowManager.addView(mSnipView, snipViewParams);
+//                    windowManager.addView(mOverlayView, params);
                 }
             });
         } catch (Exception e) {
@@ -122,5 +138,6 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
     public void sendScreenshot(File file) {
         Log.d(TAG, "sendScreenshot file path "+file.getPath());
         openScreenshot(file);
+        mWindowManager.removeView(mSnipView);
     }
 }
