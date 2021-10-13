@@ -25,16 +25,17 @@ import static android.content.Context.WINDOW_SERVICE;
 
 public class ScreenshotWidgetReceiver extends BroadcastReceiver implements ScreenCaptureService.IScreenshot {
     private static final String TAG = "ScreenshotWidgetReceiver";
+    private static final Rect LEFT_SCREEN = new Rect(0, 0, 1344, 1832);
+    private static final Rect RIGHT_SCREEN = new Rect(1410, 0, 2816, 1832);
+    private static final Rect DUAL_SCREEN = new Rect(0, 0, 2816, 1832);
 
     private Context mContext;
-    private Bitmap mScreenShot;
     private final ArrayList<Bitmap> mScrollScreenShots = new ArrayList<>(10);
-    Handler mHandler = new Handler(Looper.getMainLooper());
+    Handler mHandler = new Handler(Looper.myLooper());
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "onReceive intent action " + intent.getAction());
-        // showScreenshotWidget(context);
     }
 
     public void showScreenshotWidget(Context context, int requestCode, int resultCode, Intent data) {
@@ -56,15 +57,18 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
 
 
         params.gravity = Gravity.CENTER | Gravity.BOTTOM;
-        windowManager.addView(mOverlayView, params);
+
         final ScreenCaptureService.IScreenshot screenshotReceiver = this;
+
+        mHandler.postDelayed(() -> ScreenCaptureService.getLatestImage(bitmap -> mScrollScreenShots.add(Utils.getMainContent(bitmap)), LEFT_SCREEN), 100);
+        mHandler.postDelayed(() -> windowManager.addView(mOverlayView, params), 200);
 
         try {
             mOverlayView.findViewById(R.id.close).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mergeScrollScreenshots();
                     windowManager.removeView(mOverlayView);
+                    mergeScrollScreenshots();
                 }
             });
 
@@ -73,7 +77,7 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Left Screen Screenshot
-                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 1344, 1832));
+                    ScreenCaptureService.getLatestImage(screenshotReceiver, LEFT_SCREEN);
                 }
             });
 
@@ -81,7 +85,7 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Right Screen Screenshot
-                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(1410, 0, 2816, 1832));
+                    ScreenCaptureService.getLatestImage(screenshotReceiver, RIGHT_SCREEN);
                 }
             });
 
@@ -89,21 +93,13 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Dual Screen Screenshot
-                    ScreenCaptureService.getLatestImage(screenshotReceiver, new Rect(0, 0, 2816, 1832));
+                    ScreenCaptureService.getLatestImage(screenshotReceiver, DUAL_SCREEN);
                 }
             });
 
             mOverlayView.findViewById(R.id.complete_scroll).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    try {
-                        String keyCommand = "/system/bin/screencap -p /sdcard/Download/img.png";
-                        Runtime runtime = Runtime.getRuntime();
-                        Process proc = runtime.exec(keyCommand);
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
                     // TODO: Take Complete Screen Scroll Screenshot
                 }
             });
@@ -112,18 +108,15 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
                 @Override
                 public void onClick(View v) {
                     // TODO: Take Custom Screen Scroll Screenshot
+                    windowManager.removeView(mOverlayView);
                     scrollDown();
-                    mHandler.postDelayed(() -> ScreenCaptureService.getLatestImage(new ScreenCaptureService.IScreenshot() {
-                        @Override
-                        public void sendScreenshot(File file) {
-                        }
-
-                        @Override
-                        public void sendBitmap(Bitmap bitmap) {
+                    mHandler.postDelayed(() -> {
+                        ScreenCaptureService.getLatestImage(bitmap -> {
+                            windowManager.addView(mOverlayView, params);
                             Log.d(TAG, "bitmap received: " + mScrollScreenShots.size());
-                            mScrollScreenShots.add(bitmap);
-                        }
-                    }), 200);
+                            mScrollScreenShots.add(Utils.getMainContent(bitmap));
+                        }, LEFT_SCREEN);
+                    }, 1000);
                 }
             });
 
@@ -140,9 +133,13 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
 
     private void mergeScrollScreenshots() {
         if (mScrollScreenShots.size() > 1) {
-            // TODO: merge screenshots
             Bitmap combinedBitmap = Utils.combineImageIntoOneFlexWidth(mScrollScreenShots);
-            Utils.saveBitmap(combinedBitmap);
+            openScreenshot(Utils.saveBitmap(combinedBitmap));
+        }
+        for (Bitmap bitmap: mScrollScreenShots) {
+            if (bitmap != null) {
+                bitmap.recycle();
+            }
         }
         mScrollScreenShots.clear();
     }
@@ -167,14 +164,7 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
     }
 
     @Override
-    public void sendScreenshot(File file) {
-        Log.d(TAG, "sendScreenshot file path " + file.getPath());
-        openScreenshot(file);
-    }
-
-    @Override
     public void sendBitmap(Bitmap bitmap) {
-        mScreenShot = bitmap;
-        mScrollScreenShots.add(bitmap);
+        openScreenshot(Utils.saveBitmap(bitmap));
     }
 }

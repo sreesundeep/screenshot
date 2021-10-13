@@ -24,15 +24,15 @@ import android.view.Display;
 import android.view.OrientationEventListener;
 import android.view.WindowManager;
 
+import androidx.core.util.Pair;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.Objects;
 
-import androidx.core.util.Pair;
+import static java.lang.Math.min;
 
 public class ScreenCaptureService extends Service {
 
@@ -94,7 +94,6 @@ public class ScreenCaptureService extends Service {
     private class ImageAvailableListener implements ImageReader.OnImageAvailableListener {
         @Override
         public void onImageAvailable(ImageReader reader) {
-            FileOutputStream fos = null;
             Bitmap bitmap = null;
             try (Image image = mImageReader.acquireLatestImage()) {
                 if (image != null && mIsScreenshotNeeded && mScreenshotRect!=null) {
@@ -112,33 +111,15 @@ public class ScreenCaptureService extends Service {
                     Log.e(TAG, "Captured rect width : " + mScreenshotRect.width() + "height :"+mScreenshotRect.height());
                     Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, mScreenshotRect.left, mScreenshotRect.top, mScreenshotRect.width(), mScreenshotRect.height());
                     mScreenshotReceiver.sendBitmap(croppedBitmap);
-
-                    // write bitmap to a file
-                    String filePath = mStoreDir + "/Screenshot_" + System.currentTimeMillis() + ".png";
-                    Log.e(TAG, "Captured image filePath: " + filePath);
-                    File imageFile = new File(filePath);
-                    fos = new FileOutputStream(imageFile);
-                    croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-                    mScreenshotReceiver.sendScreenshot(imageFile);
                     mScreenshotReceiver = null;
                     mScreenshotRect = null;
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                if (fos != null) {
-                    try {
-                        fos.close();
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
-                    }
-                }
-
                 if (bitmap != null) {
                     bitmap.recycle();
                 }
-
             }
         }
     }
@@ -297,8 +278,6 @@ public class ScreenCaptureService extends Service {
     }
 
     public interface IScreenshot {
-        void sendScreenshot(File file);
-
         void sendBitmap(Bitmap bitmap);
     }
 }
