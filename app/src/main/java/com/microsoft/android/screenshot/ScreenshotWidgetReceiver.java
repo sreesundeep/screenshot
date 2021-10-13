@@ -32,7 +32,7 @@ public class ScreenshotWidgetReceiver extends BroadcastReceiver implements Scree
 
     public void showScreenshotWidget(Context context, int requestCode, int resultCode, Intent data) {
         mContext = context;
-        context.startService(ScreenCaptureService.getStartIntent(context, resultCode, data));
+        context.startForegroundService(ScreenCaptureService.getStartIntent(context, resultCode, data));
 
         WindowManager windowManager = (WindowManager) context.getSystemService(WINDOW_SERVICE);
         View mOverlayView = LayoutInflater.from(context).inflate(R.layout.screenshot_widget_layout, null);
