@@ -86,7 +86,7 @@ public class SnipView extends View {
             }
         } else if (event.getAction() == MotionEvent.ACTION_UP) {
             if (left < right && top < bottom) {
-                ScreenCaptureService.getLatestImage(mScreenShotListener, new Rect((int) left, (int) top, (int) right, (int) bottom));
+                ScreenCaptureService.getLatestImage(mScreenShotListener, new Rect((int) left + 1408, (int) top, (int) right + 1408, (int) bottom));
             }
         }
         invalidate();
